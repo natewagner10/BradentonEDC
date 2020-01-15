@@ -21,18 +21,18 @@ def clean(i):
 
 
 # get list all of all current companies:
-query = "select companyname from current;"
-cur.execute(query)
-comps = cur.fetchall()
+#query = "select companyname from current;"
+#cur.execute(query)
+#comps = cur.fetchall()
 
-comps = clean(comps)
+#comps = clean(comps)
 
 
 def businessLookup(name, beg = 0, end = 5):
-    string1 = "select substring(" + "'" + name + "', " + str(beg) + ", " + str(end) + ");"
+    string1 = "select substring(" + "'" + str(name) + "', " + str(beg) + ", " + str(end) + ");"
     cur.execute(string1)
     busName = cur.fetchall() 
-    
+    print(busName)
 
     query = "select companyname, address1, keyid from hoovers where companyname ilike '%" + busName[0][0] + "%';" 
     cur.execute(query)
@@ -42,17 +42,26 @@ def businessLookup(name, beg = 0, end = 5):
 
 
 def getInfo(name):
-    info = businessLookup(str(name))
     beg = 0
     end = len(name)
+    info = businessLookup(name, beg, end)
 
     if len(info) == 0:
-        for x in range(0, len(name)):
-            #beg += 1
-            end -= 1
+        end = int(0.75 * int(len(name)))
+        info = businessLookup(name, beg, end)
+
+    if len(info) == 0:
+        end = int(0.75 * int(len(name)))
+        beg = 4
+        info = businessLookup(name, beg, end)
+
+
+    if len(info) == 0:
+        if " " in name:
+            name = name.replace(" ", "%")
+            end = int(0.75 * int(len(name)))
+            beg = 4
             info = businessLookup(name, beg, end)
-            if len(info) != 0:
-                break
 
     if len(info) == 1:
         companynameH = info[0][0]
@@ -60,7 +69,29 @@ def getInfo(name):
         keyid = info[0][2]
         return name, companynameH, addressH, keyid
 
-    if len(info) > 1:
+    if len(info) == 2:
+        row = []
+        companynameH = info[0][0]
+        addressH = info[0][1]
+        keyid = info[0][2]
+        row.append(cleanName)
+        row.append(companynameH)
+        row.append(addressH)
+        row.append(keyid)
+        recordwriterM.writerow(row)
+        row = []
+        companynameH = info[1][0]
+        addressH = info[1][1]
+        keyid = info[1][2]        
+        row.append(cleanName)
+        row.append(companynameH)
+        row.append(addressH)
+        row.append(keyid)
+        recordwriterM.writerow(row)
+        br = "BROKE"
+        return br, br, br, br
+
+    if len(info) > 1 or len(info) == 0:
         problems = []
         problems.append(name)    
         companynameH = "BROKE"
@@ -70,21 +101,41 @@ def getInfo(name):
 
 
 
-getAllNames = "select companyname from current;"
+getAllNames = "select companyname from missing;"
 cur.execute(getAllNames)
 currentNames = cur.fetchall()
 
 
+row = []
+row.append("companynamec")
+row.append("companynameh")
+row.append("addressh")
+row.append("keyid")
+recordwriterM.writerow(row)
+row = []
+
 for name in clean(currentNames):
+    cleanName = name
     if "'" in name:
-        name = name.replace("'", "")
+        name = name.replace("'", "%")
+    if "." in name:
+        name = name.replace(".", "%")
+    if "," in name:
+        name = name.replace(",", "%")
+    if "-" in name:
+        name = name.replace("-", "%")
+    #if " " in name:
+    #    name = name.replace(" ", "")
     row = []
     companynameC, companynameH, addressH, keyid = getInfo(name)
-    if companynameH != 'BROKE':
-        row.append([companynameC, companynameH, addressH, keyid])
-        recordwriterM.writerow(row)
-    else:
+    if companynameH == 'BROKE':
         continue
+    else:
+        row.append(cleanName)
+        row.append(companynameH)
+        row.append(addressH) 
+        row.append(keyid)
+        recordwriterM.writerow(row)
     
 
 
