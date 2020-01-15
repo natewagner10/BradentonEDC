@@ -32,7 +32,7 @@ def businessLookup(name, beg = 0, end = 5):
     string1 = "select substring(" + "'" + str(name) + "', " + str(beg) + ", " + str(end) + ");"
     cur.execute(string1)
     busName = cur.fetchall() 
-    print(busName)
+    #print(busName)
 
     query = "select companyname, address1, keyid from hoovers where companyname ilike '%" + busName[0][0] + "%';" 
     cur.execute(query)
